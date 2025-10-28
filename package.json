@@ -1,6 +1,6 @@
 {
   "name": "i18n-integration-tool",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Automated i18n integration tool for Nuxt.js applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
