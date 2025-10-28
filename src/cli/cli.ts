@@ -932,8 +932,21 @@ export class CLI {
   }
 
   private async saveResults(data: any, filePath: string, format: string): Promise<void> {
-    // Implementation would save results to file
-    logger.info(`Saving results to ${filePath} in ${format} format`);
+    try {
+      const { FileOperations } = await import('../utils');
+
+      if (format === 'json') {
+        await FileOperations.writeFile(filePath, JSON.stringify(data, null, 2));
+      } else {
+        // For other formats, convert to string representation
+        await FileOperations.writeFile(filePath, JSON.stringify(data, null, 2));
+      }
+
+      logger.info(`Saving results to ${filePath} in ${format} format`);
+    } catch (error) {
+      logger.error(`Failed to save results to ${filePath}: ${error}`);
+      throw error;
+    }
   }
 
   private async saveValidationReport(data: any, filePath: string, format: string): Promise<void> {
