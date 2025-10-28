@@ -244,13 +244,13 @@ export class CLI {
 
       // Initialize scanner
       const scanner = new FileScanner(scanConfig);
-      
+
       // Show progress
       this.showProgress('Scanning files...', 0);
-      
+
       // Perform scan
       const result = await scanner.scan();
-      
+
       this.showProgress('Scanning complete', 100);
       this.showScanResults(result);
 
@@ -294,12 +294,12 @@ export class CLI {
 
       // Initialize key manager
       const keyManager = new KeyManager(keyConfig);
-      
+
       this.showProgress('Generating keys...', 0);
-      
+
       // Generate keys
       const generatedKeys = await keyManager.generateKeys(scanResult.matches);
-      
+
       this.showProgress('Key generation complete', 100);
       this.showKeyGenerationResults(generatedKeys);
 
@@ -339,12 +339,12 @@ export class CLI {
 
       // Initialize file processor
       const processor = new FileProcessor(transformConfig);
-      
+
       this.showProgress('Transforming files...', 0);
-      
+
       // Perform transformation
       const results = await processor.transformFiles(generatedKeys);
-      
+
       this.showProgress('Transformation complete', 100);
       this.showTransformationResults(results);
 
@@ -367,9 +367,9 @@ export class CLI {
       // Use the comprehensive validation system
       const { ValidationSystem } = await import('../validator');
       const validationSystem = new ValidationSystem(validateConfig);
-      
+
       this.showProgress('Running comprehensive validation...', 0);
-      
+
       // Perform comprehensive validation
       const comprehensiveResult = await validationSystem.validateIntegration({
         checkReplacedStrings: options.checkReplaced !== false,
@@ -377,7 +377,7 @@ export class CLI {
         checkSyntax: options.checkSyntax !== false,
         checkImports: options.checkImports !== false
       });
-      
+
       this.showProgress('Validation complete', 100);
       this.showComprehensiveValidationResults(comprehensiveResult);
 
@@ -430,9 +430,9 @@ export class CLI {
       // Use the comprehensive validation system with Nuxt integration
       const { ValidationSystem } = await import('../validator');
       const validationSystem = new ValidationSystem(this.config);
-      
+
       this.showProgress('Running Nuxt.js integration validation...', 0);
-      
+
       // Perform Nuxt integration validation
       const nuxtResult = await validationSystem.validateNuxtIntegration({
         testLocaleSwitching: options.testLocaleSwitching !== false,
@@ -442,7 +442,7 @@ export class CLI {
         nuxtConfigPath: options.nuxtConfig,
         translationFilesPath: options.translationsPath
       });
-      
+
       this.showProgress('Nuxt.js validation complete', 100);
       this.showNuxtValidationResults(nuxtResult);
 
@@ -500,7 +500,7 @@ export class CLI {
 
       // Show summary
       console.log(ReportGenerator.generateSummaryReport(result));
-      
+
       if (result.success) {
         logger.info(chalk.green('\n🎉 i18n integration workflow completed successfully!'));
         logger.info(chalk.blue(`📋 Detailed report saved to: ${reportPath}`));
@@ -621,10 +621,10 @@ export class CLI {
       } else {
         // Run full workflow to generate comprehensive data
         logger.info('No input file specified, running full workflow analysis...');
-        
+
         const { WorkflowOrchestrator } = await import('../orchestrator');
         const orchestrator = new WorkflowOrchestrator(this.configManager);
-        
+
         workflowResult = await orchestrator.executeWorkflow({
           skipValidation: !options.includeValidation,
           saveIntermediateResults: false,
@@ -663,40 +663,40 @@ export class CLI {
 
   private async loadTranslationFiles(translationsPath: string): Promise<Record<string, Record<string, string>>> {
     const translationFiles: Record<string, Record<string, string>> = {};
-    
+
     try {
       const { FileOperations } = await import('../utils');
       // For now, assume common locale files exist
       const files = ['fa.json', 'en.json'].map(f => path.join(translationsPath, f));
-      
+
       for (const file of files) {
         const locale = path.basename(file, '.json');
         const content = await FileOperations.readFile(file);
         translationFiles[locale] = JSON.parse(content);
       }
-      
+
     } catch (error) {
       logger.warn(`Failed to load translation files from ${translationsPath}: ${error}`);
     }
-    
+
     return translationFiles;
   }
 
   private async extractUsedKeys(): Promise<string[]> {
     const usedKeys: string[] = [];
-    
+
     try {
       // This would scan the codebase for $t() calls and extract the keys
       // For now, return empty array as placeholder
       logger.info('Scanning codebase for used translation keys...');
-      
+
       // Implementation would use the scanner to find $t() calls
       // and extract the key parameters
-      
+
     } catch (error) {
       logger.warn(`Failed to extract used keys: ${error}`);
     }
-    
+
     return usedKeys;
   }
 
@@ -721,7 +721,7 @@ export class CLI {
   private async handleConfigShowCommand(options: any): Promise<void> {
     try {
       const config = this.configManager.getConfig();
-      
+
       if (options.json) {
         console.log(JSON.stringify(config, null, 2));
       } else {
@@ -739,25 +739,25 @@ export class CLI {
       // Parse the key path (e.g., "keyGeneration.maxLength")
       const keyPath = key.split('.');
       const updates: any = {};
-      
+
       // Build nested object
       let current = updates;
       for (let i = 0; i < keyPath.length - 1; i++) {
         current[keyPath[i]] = {};
         current = current[keyPath[i]];
       }
-      
+
       // Set the final value (try to parse as number/boolean)
       let parsedValue: any = value;
       if (value === 'true') parsedValue = true;
       else if (value === 'false') parsedValue = false;
       else if (!isNaN(Number(value))) parsedValue = Number(value);
-      
+
       current[keyPath[keyPath.length - 1]] = parsedValue;
 
       this.configManager.updateConfig(updates);
       await this.configManager.save();
-      
+
       logger.info(chalk.green(`✅ Configuration updated: ${key} = ${value}`));
 
     } catch (error) {
@@ -787,6 +787,14 @@ export class CLI {
     console.log(`   📝 Text matches found: ${result.matches.length}`);
     if (result.errors.length > 0) {
       console.log(chalk.yellow(`   ⚠️  Errors: ${result.errors.length}`));
+
+      // Show detailed errors
+      console.log(chalk.red('\n📋 Error Details:'));
+      result.errors.forEach((error, index) => {
+        console.log(chalk.red(`   ${index + 1}. ${error}`));
+      });
+
+      console.log(chalk.blue('\n💡 Tip: Use --verbose flag for more detailed logging during the scan process.'));
     }
   }
 
@@ -811,20 +819,20 @@ export class CLI {
 
   private showComprehensiveValidationResults(results: any): void {
     console.log(chalk.green(`\n✅ Comprehensive validation completed:`));
-    
+
     // Show summary
     console.log(`   📁 Total files: ${results.summary.totalFiles}`);
     console.log(`   ✅ Valid files: ${results.summary.validFiles}`);
     console.log(`   ❌ Files with errors: ${results.summary.filesWithErrors}`);
-    
+
     if (results.summary.totalUnreplacedStrings > 0) {
       console.log(chalk.yellow(`   🔤 Unreplaced strings: ${results.summary.totalUnreplacedStrings}`));
     }
-    
+
     if (results.summary.totalMissingKeys > 0) {
       console.log(chalk.yellow(`   🔑 Missing keys: ${results.summary.totalMissingKeys}`));
     }
-    
+
     if (results.summary.totalSyntaxErrors > 0) {
       console.log(chalk.red(`   💥 Syntax errors: ${results.summary.totalSyntaxErrors}`));
     }
@@ -834,14 +842,14 @@ export class CLI {
       console.log(chalk.green('\n   🎉 All validation checks passed!'));
     } else {
       console.log(chalk.red(`\n   ❌ Validation failed with ${results.errors.length} errors`));
-      
+
       // Show first few errors
       if (results.errors.length > 0) {
         console.log(chalk.red('\n   First few errors:'));
         results.errors.slice(0, 5).forEach((error: string, index: number) => {
           console.log(chalk.red(`   ${index + 1}. ${error}`));
         });
-        
+
         if (results.errors.length > 5) {
           console.log(chalk.yellow(`   ... and ${results.errors.length - 5} more errors`));
         }
@@ -859,20 +867,20 @@ export class CLI {
 
   private showNuxtValidationResults(results: any): void {
     console.log(chalk.green(`\n✅ Nuxt.js integration validation completed:`));
-    
+
     // Show configuration status
     console.log(`   📋 Nuxt config valid: ${results.nuxtConfigValid ? '✅' : '❌'}`);
     console.log(`   🔧 i18n module configured: ${results.i18nModuleConfigured ? '✅' : '❌'}`);
     console.log(`   📁 Translation files accessible: ${results.translationFilesAccessible ? '✅' : '❌'}`);
     console.log(`   🚀 Dev server started: ${results.devServerStarted ? '✅' : '❌'}`);
-    
+
     // Show test results
     console.log(chalk.blue('\n🧪 Test Results:'));
     results.testResults.forEach((test: any, index: number) => {
       const status = test.passed ? '✅' : '❌';
       const duration = `(${test.duration}ms)`;
       console.log(`   ${index + 1}. ${status} ${test.testName} ${duration}`);
-      
+
       if (!test.passed && test.error) {
         console.log(chalk.red(`      Error: ${test.error}`));
       }
@@ -883,14 +891,14 @@ export class CLI {
       console.log(chalk.green('\n   🎉 All Nuxt.js integration tests passed!'));
     } else {
       console.log(chalk.red(`\n   ❌ Nuxt.js integration validation failed with ${results.errors.length} errors`));
-      
+
       // Show first few errors
       if (results.errors.length > 0) {
         console.log(chalk.red('\n   First few errors:'));
         results.errors.slice(0, 3).forEach((error: string, index: number) => {
           console.log(chalk.red(`   ${index + 1}. ${error}`));
         });
-        
+
         if (results.errors.length > 3) {
           console.log(chalk.yellow(`   ... and ${results.errors.length - 3} more errors`));
         }
@@ -931,14 +939,14 @@ export class CLI {
   private async saveValidationReport(data: any, filePath: string, format: string): Promise<void> {
     try {
       const { FileOperations } = await import('../utils');
-      
+
       if (format === 'json') {
         await FileOperations.writeFile(filePath, JSON.stringify(data, null, 2));
       } else if (format === 'html') {
         const htmlReport = this.generateHtmlValidationReport(data);
         await FileOperations.writeFile(filePath, htmlReport);
       }
-      
+
       logger.info(`Validation report saved to ${filePath} in ${format} format`);
     } catch (error) {
       logger.warn(`Failed to save validation report: ${error}`);
@@ -948,14 +956,14 @@ export class CLI {
   private async saveNuxtValidationReport(data: any, filePath: string, format: string): Promise<void> {
     try {
       const { FileOperations } = await import('../utils');
-      
+
       if (format === 'json') {
         await FileOperations.writeFile(filePath, JSON.stringify(data, null, 2));
       } else if (format === 'html') {
         const htmlReport = this.generateHtmlNuxtValidationReport(data);
         await FileOperations.writeFile(filePath, htmlReport);
       }
-      
+
       logger.info(`Nuxt validation report saved to ${filePath} in ${format} format`);
     } catch (error) {
       logger.warn(`Failed to save Nuxt validation report: ${error}`);
