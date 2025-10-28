@@ -1,0 +1,38 @@
+{
+  "sourceDirectories": [
+    "components",
+    "pages",
+    "layouts",
+    "plugins",
+    "middleware",
+    "composables",
+    "store"
+  ],
+  "excludePatterns": [
+    "node_modules/**",
+    ".nuxt/**",
+    ".output/**",
+    "dist/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.d.ts"
+  ],
+  "locales": {
+    "source": "fa",
+    "target": "en"
+  },
+  "keyGeneration": {
+    "strategy": "semantic",
+    "maxLength": 50,
+    "useContext": true
+  },
+  "fileProcessing": {
+    "createBackups": true,
+    "dryRun": false,
+    "batchSize": 10
+  },
+  "translationFiles": {
+    "directory": "assets/locales",
+    "format": "json"
+  }
+}
