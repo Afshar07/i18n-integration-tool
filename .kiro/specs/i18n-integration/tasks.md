@@ -235,6 +235,7 @@
 
 - [x] 10. Fix CLI tool bugs and improve stability
 
+
   - [x] 10.1 Fix missing dependencies and package.json configuration
 
 
