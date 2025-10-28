@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "i18n-integrate": "dist/cli.js"
+    "i18n-integrate": "dist/cli/main.js"
   },
   "files": [
     "dist/**/*",
@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/cli.js",
+    "start": "node dist/cli/main.js",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "test": "echo \"No tests specified\" && exit 0"
@@ -49,9 +49,12 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/generator": "^7.28.5",
     "@babel/parser": "^7.23.0",
     "@babel/traverse": "^7.23.0",
     "@babel/types": "^7.23.0",
+    "@vue/compiler-dom": "^3.5.22",
     "@vue/compiler-sfc": "^3.3.0",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
