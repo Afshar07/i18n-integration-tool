@@ -336,7 +336,27 @@ export class CLI {
       // Load generated keys
       let generatedKeys: any;
       if (options.input) {
-        generatedKeys = await this.loadResults(options.input);
+        const loadedData = await this.loadResults(options.input);
+        
+        // Handle different input formats
+        if (Array.isArray(loadedData)) {
+          // Direct array of generated keys
+          generatedKeys = loadedData;
+        } else if (loadedData.matches && Array.isArray(loadedData.matches)) {
+          // This is scan results format, not generated keys
+          logger.error('Input file appears to contain scan results, not generated keys.');
+          logger.error('Please run the "generate" command first to create translation keys from scan results.');
+          logger.info('Example: i18n-integrate generate -i generated-keys.json -o translation-keys.json');
+          process.exit(1);
+        } else if (loadedData.generatedKeys && Array.isArray(loadedData.generatedKeys)) {
+          // Wrapped in an object with generatedKeys property
+          generatedKeys = loadedData.generatedKeys;
+        } else if (loadedData.keys && Array.isArray(loadedData.keys)) {
+          // Alternative format with keys property
+          generatedKeys = loadedData.keys;
+        } else {
+          throw new Error(`Expected an array of generated keys or object with 'generatedKeys'/'keys' property, but got: ${typeof loadedData}. Available properties: ${Object.keys(loadedData).join(', ')}`);
+        }
       } else {
         logger.error('Input file with generated keys is required for transformation');
         process.exit(1);
@@ -1223,22 +1243,8 @@ export class CLI {
         throw new Error(`Invalid JSON format in ${filePath}`);
       }
 
-      // Handle different possible formats
-      if (Array.isArray(results)) {
-        // Direct array of generated keys or scan matches
-        return results;
-      } else if (results.matches && Array.isArray(results.matches)) {
-        // Scan results format - return the full object to preserve metadata
-        return results;
-      } else if (results.generatedKeys && Array.isArray(results.generatedKeys)) {
-        // Wrapped in an object with generatedKeys property
-        return results.generatedKeys;
-      } else if (results.keys && Array.isArray(results.keys)) {
-        // Alternative format with keys property
-        return results.keys;
-      } else {
-        throw new Error(`Expected an array or object with 'matches', 'generatedKeys', or 'keys' property, but got: ${typeof results}. Available properties: ${Object.keys(results).join(', ')}`);
-      }
+      // Return the raw results - let the calling method handle format detection
+      return results;
 
     } catch (error) {
       if (error instanceof SyntaxError) {
