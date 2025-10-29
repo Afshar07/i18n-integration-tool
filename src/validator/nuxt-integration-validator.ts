@@ -301,17 +301,133 @@ export class NuxtIntegrationValidator {
   }
 
   /**
+   * Validate project environment for development server
+   */
+  private async validateProjectEnvironment(): Promise<{
+    isValid: boolean;
+    error?: string;
+    packageManager?: 'npm' | 'yarn' | 'pnpm';
+  }> {
+    try {
+      // Check if package.json exists
+      const packageJsonPath = path.join(this.projectRoot, 'package.json');
+      try {
+        await fs.access(packageJsonPath);
+      } catch {
+        return {
+          isValid: false,
+          error: 'No package.json found. Make sure you\'re running this command from a Node.js project directory.'
+        };
+      }
+
+      // Read and parse package.json
+      let packageJson;
+      try {
+        const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+        packageJson = JSON.parse(packageJsonContent);
+      } catch {
+        return {
+          isValid: false,
+          error: 'Invalid package.json file. Please check the JSON syntax.'
+        };
+      }
+
+      // Check if dev script exists
+      if (!packageJson.scripts?.dev) {
+        return {
+          isValid: false,
+          error: 'No "dev" script found in package.json. This command requires a Nuxt.js project with a development server script.'
+        };
+      }
+
+      // Detect package manager
+      let packageManager: 'npm' | 'yarn' | 'pnpm' = 'npm';
+      
+      // Check for lock files to determine package manager
+      try {
+        await fs.access(path.join(this.projectRoot, 'yarn.lock'));
+        packageManager = 'yarn';
+      } catch {
+        try {
+          await fs.access(path.join(this.projectRoot, 'pnpm-lock.yaml'));
+          packageManager = 'pnpm';
+        } catch {
+          // Default to npm
+        }
+      }
+
+      // Check if package manager is available
+      return new Promise((resolve) => {
+        const testProcess = spawn(packageManager, ['--version'], { 
+          stdio: 'pipe',
+          shell: true  // Use shell to handle .cmd files on Windows
+        });
+        
+        testProcess.on('error', (error) => {
+          if (error.message.includes('ENOENT')) {
+            resolve({
+              isValid: false,
+              error: `Package manager "${packageManager}" is not installed or not available in PATH. Please install ${packageManager} or use a different package manager.`
+            });
+          } else {
+            resolve({
+              isValid: false,
+              error: `Failed to verify package manager: ${error.message}`
+            });
+          }
+        });
+
+        testProcess.on('exit', (code) => {
+          if (code === 0) {
+            resolve({
+              isValid: true,
+              packageManager
+            });
+          } else {
+            resolve({
+              isValid: false,
+              error: `Package manager "${packageManager}" is not working properly (exit code: ${code})`
+            });
+          }
+        });
+      });
+
+    } catch (error) {
+      return {
+        isValid: false,
+        error: `Failed to validate project environment: ${error}`
+      };
+    }
+  }
+
+  /**
    * Start Nuxt development server
    */
   private async startDevServer(timeout: number): Promise<NuxtIntegrationResult> {
     const startTime = Date.now();
     
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       try {
-        // Start Nuxt dev server
-        this.devProcess = spawn('npm', ['run', 'dev'], {
+        // Check if we're in a valid Nuxt project
+        const projectValidation = await this.validateProjectEnvironment();
+        if (!projectValidation.isValid) {
+          resolve({
+            testName: 'Development Server Start',
+            passed: false,
+            error: projectValidation.error,
+            duration: Date.now() - startTime
+          });
+          return;
+        }
+
+        // Start Nuxt dev server using the detected package manager
+        const packageManager = projectValidation.packageManager!;
+        const devCommand = packageManager === 'yarn' ? ['dev'] : ['run', 'dev'];
+        
+        this.devProcess = spawn(packageManager, devCommand, {
           cwd: this.projectRoot,
-          stdio: 'pipe'
+          stdio: 'pipe',
+          shell: true  // Use shell to handle .cmd files on Windows
         });
 
         let serverStarted = false;
