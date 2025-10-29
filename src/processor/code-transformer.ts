@@ -48,7 +48,7 @@ export class CodeTransformer {
         plugins: [
           ['typescript', { isTSX: false }],
           'jsx',
-          'decorators-legacy',
+          ['decorators', { legacy: true }],
           'classProperties',
           'objectRestSpread',
           'asyncGenerators',
