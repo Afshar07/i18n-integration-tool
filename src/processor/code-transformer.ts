@@ -42,15 +42,11 @@ export class CodeTransformer {
       const replacements: TextReplacement[] = [];
       let hasChanges = false;
 
-      // Parse the code into AST
+      // Parse the code into AST - using only built-in parser plugins
       const ast = babel.parse(code, {
         sourceType: 'module',
         plugins: [
-          ['typescript', { isTSX: false }],
           'jsx',
-          ['decorators', { legacy: true }],
-          'classProperties',
-          'objectRestSpread',
           'asyncGenerators',
           'functionBind',
           'exportDefaultFrom',
