@@ -42,19 +42,13 @@ export class CodeTransformer {
       const replacements: TextReplacement[] = [];
       let hasChanges = false;
 
-      // Parse the code into AST - using only built-in parser plugins
-      const ast = babel.parse(code, {
+      // Parse the code into AST - using @babel/parser directly to avoid plugin dependencies
+      const { parse } = await import('@babel/parser');
+      const ast = parse(code, {
         sourceType: 'module',
-        plugins: [
-          'jsx',
-          'asyncGenerators',
-          'functionBind',
-          'exportDefaultFrom',
-          'exportNamespaceFrom',
-          'dynamicImport',
-          'nullishCoalescingOperator',
-          'optionalChaining'
-        ]
+        allowImportExportEverywhere: true,
+        allowReturnOutsideFunction: true,
+        plugins: []
       });
 
       if (!ast) {
