@@ -112,18 +112,14 @@ export class FileProcessor {
 
     // Extract template section
     const templateContent = this.templateTransformer.extractTemplateFromVue(content);
-    console.log('DEBUG: Template content extracted:', !!templateContent, templateContent?.length);
     if (templateContent) {
       const templateMatches = matches.filter(m => m.context === 'template');
-      console.log('DEBUG: Template matches found:', templateMatches.length);
       if (templateMatches.length > 0) {
-        console.log('DEBUG: Processing template matches:', templateMatches.map(m => m.text));
         const templateResult = await this.templateTransformer.transformTemplate(
           templateContent,
           templateMatches,
           keyMap
         );
-        console.log('DEBUG: Template transformation result:', templateResult.hasChanges, templateResult.replacements.length);
         
         if (templateResult.hasChanges) {
           transformedContent = this.templateTransformer.replaceTemplateInVue(
@@ -131,7 +127,6 @@ export class FileProcessor {
             templateResult.transformedTemplate
           );
           allReplacements.push(...templateResult.replacements);
-          console.log('DEBUG: Template content replaced');
         }
       }
     }
@@ -244,7 +239,7 @@ export class FileProcessor {
   /**
    * Transform files using generated keys (main entry point for CLI)
    */
-  async transformFiles(generatedKeys: Array<{ key: string; originalText: string; filePath?: string }>): Promise<TransformationResult[]> {
+  async transformFiles(generatedKeys: Array<{ key: string; originalText: string; filePath?: string; context?: string; lineNumber?: number; columnNumber?: number }>): Promise<TransformationResult[]> {
     logger.info(`Transforming files using ${generatedKeys.length} generated keys`);
 
     // Group keys by file path
@@ -262,9 +257,9 @@ export class FileProcessor {
         fileMatches.get(genKey.filePath)!.push({
           text: genKey.originalText,
           filePath: genKey.filePath,
-          lineNumber: 0, // Would need to be provided by scanner
-          columnNumber: 0,
-          context: 'script' // Default context
+          lineNumber: genKey.lineNumber || 0,
+          columnNumber: genKey.columnNumber || 0,
+          context: (genKey.context as 'template' | 'script' | 'style') || 'script' // Use provided context or default to script
         });
       }
     }
