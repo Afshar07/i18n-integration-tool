@@ -1190,12 +1190,12 @@ export class CLI {
 
   private async loadResults(filePath: string): Promise<any> {
     logger.info(`Loading results from ${filePath}`);
-    
+
     try {
       // Check if file exists
       const { FileOperations } = await import('../utils');
       const fileExists = await FileOperations.fileExists(filePath);
-      
+
       if (!fileExists) {
         throw new Error(`Input file not found: ${filePath}`);
       }
@@ -1203,7 +1203,7 @@ export class CLI {
       // Read and parse JSON file
       const content = await FileOperations.readFile(filePath);
       const results = JSON.parse(content);
-      
+
       // Validate the structure
       if (!results || typeof results !== 'object') {
         throw new Error(`Invalid JSON format in ${filePath}`);
@@ -1211,7 +1211,7 @@ export class CLI {
 
       // Handle different possible formats
       if (Array.isArray(results)) {
-        // Direct array of generated keys
+        // Direct array of generated keys or scan matches
         return results;
       } else if (results.generatedKeys && Array.isArray(results.generatedKeys)) {
         // Wrapped in an object with generatedKeys property
@@ -1219,10 +1219,13 @@ export class CLI {
       } else if (results.keys && Array.isArray(results.keys)) {
         // Alternative format with keys property
         return results.keys;
+      } else if (results.matches && Array.isArray(results.matches)) {
+        // Scan results format with matches property
+        return results.matches;
       } else {
-        throw new Error(`Expected an array of generated keys, but got: ${typeof results}`);
+        throw new Error(`Expected an array or object with 'matches', 'generatedKeys', or 'keys' property, but got: ${typeof results}`);
       }
-      
+
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new Error(`Invalid JSON syntax in ${filePath}: ${error.message}`);
