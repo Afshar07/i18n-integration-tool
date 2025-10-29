@@ -337,7 +337,7 @@ export class CLI {
       let generatedKeys: any;
       if (options.input) {
         const loadedData = await this.loadResults(options.input);
-        
+
         // Handle different input formats
         if (Array.isArray(loadedData)) {
           // Direct array of generated keys
