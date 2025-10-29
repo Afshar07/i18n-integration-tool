@@ -250,6 +250,14 @@ export class KeyManager {
    * Generate keys for multiple text matches (batch processing)
    */
   async generateKeys(matches: Array<{ text: string; filePath: string; context?: string }>): Promise<GeneratedKey[]> {
+    if (!matches) {
+      throw new Error('Matches parameter is undefined. Please ensure scan results contain a valid matches array.');
+    }
+    
+    if (!Array.isArray(matches)) {
+      throw new Error(`Expected matches to be an array, but got: ${typeof matches}`);
+    }
+    
     logger.info(`Generating keys for ${matches.length} text matches`);
     
     const results: GeneratedKey[] = [];

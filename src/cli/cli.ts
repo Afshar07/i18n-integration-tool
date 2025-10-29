@@ -273,7 +273,21 @@ export class CLI {
       // Load scan results
       let scanResult: ScanResult;
       if (options.input) {
-        scanResult = await this.loadResults(options.input);
+        const loadedData = await this.loadResults(options.input);
+        // If loadedData is already a ScanResult object, use it directly
+        // If it's just the matches array, wrap it in a ScanResult object
+        if (Array.isArray(loadedData)) {
+          scanResult = {
+            matches: loadedData,
+            totalFiles: 0,
+            processedFiles: 0,
+            errors: []
+          };
+        } else if (loadedData.matches) {
+          scanResult = loadedData;
+        } else {
+          throw new Error('Invalid scan results format. Expected object with matches property or array of matches.');
+        }
       } else {
         logger.info('No input file specified, running scan first...');
         const scanner = new FileScanner(this.config);
@@ -1213,17 +1227,17 @@ export class CLI {
       if (Array.isArray(results)) {
         // Direct array of generated keys or scan matches
         return results;
+      } else if (results.matches && Array.isArray(results.matches)) {
+        // Scan results format - return the full object to preserve metadata
+        return results;
       } else if (results.generatedKeys && Array.isArray(results.generatedKeys)) {
         // Wrapped in an object with generatedKeys property
         return results.generatedKeys;
       } else if (results.keys && Array.isArray(results.keys)) {
         // Alternative format with keys property
         return results.keys;
-      } else if (results.matches && Array.isArray(results.matches)) {
-        // Scan results format with matches property
-        return results.matches;
       } else {
-        throw new Error(`Expected an array or object with 'matches', 'generatedKeys', or 'keys' property, but got: ${typeof results}`);
+        throw new Error(`Expected an array or object with 'matches', 'generatedKeys', or 'keys' property, but got: ${typeof results}. Available properties: ${Object.keys(results).join(', ')}`);
       }
 
     } catch (error) {
