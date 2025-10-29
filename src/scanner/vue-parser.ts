@@ -57,12 +57,18 @@ export class VueParser {
         );
       }
 
-      // Parse script section
+      // Parse script section (handle both regular script and script setup)
       if (descriptor.script) {
         result.script = await this.parseScriptSection(
           descriptor.script.content,
           filePath,
           descriptor.script.loc.start.line
+        );
+      } else if (descriptor.scriptSetup) {
+        result.script = await this.parseScriptSection(
+          descriptor.scriptSetup.content,
+          filePath,
+          descriptor.scriptSetup.loc.start.line
         );
       }
 

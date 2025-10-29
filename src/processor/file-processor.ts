@@ -151,7 +151,7 @@ export class FileProcessor {
         }
       }
 
-      // Inject imports if needed
+      // Inject imports if needed (check both template and script replacements)
       const needsI18n = allReplacements.length > 0;
       if (needsI18n) {
         const importResult = await this.importInjector.injectImports(processedScript, needsI18n);
@@ -161,12 +161,14 @@ export class FileProcessor {
         }
       }
 
-      // Replace script section in Vue file
-      transformedContent = this.importInjector.replaceScriptInVue(
-        transformedContent,
-        processedScript,
-        hasSetup
-      );
+      // Replace script section in Vue file only if there were changes
+      if (needsI18n || processedScript !== script) {
+        transformedContent = this.importInjector.replaceScriptInVue(
+          transformedContent,
+          processedScript,
+          hasSetup
+        );
+      }
     }
 
     return {
