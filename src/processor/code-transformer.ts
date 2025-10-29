@@ -46,7 +46,7 @@ export class CodeTransformer {
       const ast = babel.parse(code, {
         sourceType: 'module',
         plugins: [
-          'typescript',
+          ['typescript', { isTSX: false }],
           'jsx',
           'decorators-legacy',
           'classProperties',

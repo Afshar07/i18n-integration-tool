@@ -1,6 +1,6 @@
 {
   "name": "i18n-integration-tool",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Automated i18n integration tool for Nuxt.js applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,6 +52,7 @@
     "@babel/core": "^7.28.5",
     "@babel/generator": "^7.28.5",
     "@babel/parser": "^7.23.0",
+    "@babel/plugin-transform-typescript": "^7.23.0",
     "@babel/traverse": "^7.23.0",
     "@babel/types": "^7.23.0",
     "@vue/compiler-dom": "^3.5.22",
