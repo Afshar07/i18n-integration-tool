@@ -1,4 +1,3 @@
-import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
@@ -42,14 +41,72 @@ export class CodeTransformer {
       const replacements: TextReplacement[] = [];
       let hasChanges = false;
 
-      // Parse the code into AST - using @babel/parser directly to avoid plugin dependencies
+      // Parse the code into AST - detect if it's TypeScript and handle accordingly
       const { parse } = await import('@babel/parser');
-      const ast = parse(code, {
-        sourceType: 'module',
-        allowImportExportEverywhere: true,
-        allowReturnOutsideFunction: true,
-        plugins: []
-      });
+      
+      // Check if the code contains TypeScript syntax
+      const isTypeScript = /\b(interface|type|enum|namespace|declare|abstract|implements|private|protected|public|readonly)\b/.test(code);
+      
+      let ast;
+      try {
+        if (isTypeScript) {
+          // For TypeScript files, use TypeScript parser configuration
+          ast = parse(code, {
+            sourceType: 'module',
+            allowImportExportEverywhere: true,
+            allowReturnOutsideFunction: true,
+            plugins: [
+              'typescript',
+              'jsx',
+              'decorators-legacy',
+              'classProperties',
+              'objectRestSpread'
+            ]
+          });
+        } else {
+          // For JavaScript files, use JavaScript parser configuration
+          ast = parse(code, {
+            sourceType: 'module',
+            allowImportExportEverywhere: true,
+            allowReturnOutsideFunction: true,
+            plugins: [
+              'jsx',
+              'decorators-legacy',
+              'classProperties',
+              'objectRestSpread'
+            ]
+          });
+        }
+      } catch (error) {
+        // If parsing fails, try with a more permissive configuration
+        logger.warn(`Initial parsing failed, trying with permissive configuration: ${error}`);
+        try {
+          ast = parse(code, {
+            sourceType: 'unambiguous',
+            allowImportExportEverywhere: true,
+            allowReturnOutsideFunction: true,
+            allowUndeclaredExports: true,
+            strictMode: false,
+            plugins: [
+              'typescript',
+              'jsx',
+              'decorators-legacy',
+              'classProperties',
+              'objectRestSpread',
+              'optionalChaining',
+              'nullishCoalescingOperator'
+            ]
+          });
+        } catch (fallbackError) {
+          // If all parsing attempts fail, skip this file
+          logger.warn(`Skipping file due to parsing error: ${fallbackError}`);
+          return {
+            transformedCode: code,
+            replacements: [],
+            hasChanges: false
+          };
+        }
+      }
 
       if (!ast) {
         throw new Error('Failed to parse code');
