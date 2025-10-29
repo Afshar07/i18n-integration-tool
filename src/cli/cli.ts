@@ -342,6 +342,18 @@ export class CLI {
 
       this.showProgress('Transforming files...', 0);
 
+      // Validate generated keys format
+      if (!Array.isArray(generatedKeys)) {
+        throw new Error(`Expected an array of generated keys, but got: ${typeof generatedKeys}`);
+      }
+
+      if (generatedKeys.length === 0) {
+        logger.warn('No generated keys found in input file. Nothing to transform.');
+        return;
+      }
+
+      logger.info(`Transforming files using ${generatedKeys.length} generated keys`);
+
       // Perform transformation
       const results = await processor.transformFiles(generatedKeys);
 
@@ -1177,9 +1189,46 @@ export class CLI {
   }
 
   private async loadResults(filePath: string): Promise<any> {
-    // Implementation would load results from file
     logger.info(`Loading results from ${filePath}`);
-    return {};
+    
+    try {
+      // Check if file exists
+      const { FileOperations } = await import('../utils');
+      const fileExists = await FileOperations.fileExists(filePath);
+      
+      if (!fileExists) {
+        throw new Error(`Input file not found: ${filePath}`);
+      }
+
+      // Read and parse JSON file
+      const content = await FileOperations.readFile(filePath);
+      const results = JSON.parse(content);
+      
+      // Validate the structure
+      if (!results || typeof results !== 'object') {
+        throw new Error(`Invalid JSON format in ${filePath}`);
+      }
+
+      // Handle different possible formats
+      if (Array.isArray(results)) {
+        // Direct array of generated keys
+        return results;
+      } else if (results.generatedKeys && Array.isArray(results.generatedKeys)) {
+        // Wrapped in an object with generatedKeys property
+        return results.generatedKeys;
+      } else if (results.keys && Array.isArray(results.keys)) {
+        // Alternative format with keys property
+        return results.keys;
+      } else {
+        throw new Error(`Expected an array of generated keys, but got: ${typeof results}`);
+      }
+      
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JSON syntax in ${filePath}: ${error.message}`);
+      }
+      throw error;
+    }
   }
 
   async run(args: string[]): Promise<void> {
