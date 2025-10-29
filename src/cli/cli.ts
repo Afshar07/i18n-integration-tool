@@ -168,6 +168,7 @@ export class CLI {
       .option('-e, --exclude <patterns...>', 'patterns to exclude (overrides config)')
       .option('--skip-validation', 'skip final validation step')
       .option('--interactive', 'prompt for confirmation at each step')
+      .option('--no-backup', 'skip creating backup files')
       .action(async (options) => {
         await this.handleFullCommand(options);
       });
@@ -520,6 +521,9 @@ export class CLI {
       }
       if (options.exclude) {
         workflowConfig.excludePatterns = [...workflowConfig.excludePatterns, ...options.exclude];
+      }
+      if (options.backup === false) {
+        workflowConfig.fileProcessing = { ...workflowConfig.fileProcessing, createBackups: false };
       }
 
       // Update config manager with overrides

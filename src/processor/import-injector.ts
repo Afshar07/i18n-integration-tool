@@ -195,9 +195,16 @@ export class ImportInjector {
         logger.debug('Added useI18n import');
       }
 
-      // Add i18n destructuring if not present and we have a setup function
-      if (!hasI18nDestructuring && setupFunction) {
-        this.addI18nDestructuring(setupFunction);
+      // Add i18n destructuring if not present
+      // For <script setup>, we add it directly to the program body
+      // For regular setup functions, we add it to the function body
+      if (!hasI18nDestructuring) {
+        if (setupFunction) {
+          this.addI18nDestructuring(setupFunction);
+        } else {
+          // For <script setup>, add destructuring at the top level
+          this.addTopLevelI18nDestructuring(ast);
+        }
         addedImports.push('const {t: $t} = useI18n()');
         hasChanges = true;
         logger.debug('Added i18n destructuring');
@@ -263,6 +270,38 @@ export class ImportInjector {
   }
 
   /**
+   * Add i18n destructuring to top-level script (for <script setup>)
+   */
+  private addTopLevelI18nDestructuring(ast: any): void {
+    // Create the destructuring statement
+    const destructuringStatement = t.variableDeclaration('const', [
+      t.variableDeclarator(
+        t.objectPattern([
+          t.objectProperty(
+            t.identifier('t'),
+            t.identifier(this.options.useAlias ? '$t' : 't')
+          )
+        ]),
+        t.callExpression(t.identifier('useI18n'), [])
+      )
+    ]);
+
+    // Add after imports but before other code
+    if (ast && t.isFile(ast) && ast.program && ast.program.body) {
+      // Find the position after the last import
+      let insertIndex = 0;
+      for (let i = 0; i < ast.program.body.length; i++) {
+        if (t.isImportDeclaration(ast.program.body[i])) {
+          insertIndex = i + 1;
+        } else {
+          break;
+        }
+      }
+      ast.program.body.splice(insertIndex, 0, destructuringStatement);
+    }
+  }
+
+  /**
    * Check if code is a Vue Single File Component
    */
   isVueComponent(code: string): boolean {
@@ -300,13 +339,23 @@ export class ImportInjector {
   replaceScriptInVue(vueCode: string, newScript: string, hasSetup: boolean): string {
     if (hasSetup) {
       return vueCode.replace(
-        /<script[^>]*setup[^>]*>([\s\S]*?)<\/script>/,
-        `<script setup lang="ts">\n${newScript}\n</script>`
+        /<script([^>]*setup[^>]*)>([\s\S]*?)<\/script>/,
+        (match, attributes) => {
+          // Preserve existing attributes, only add lang="ts" if not present
+          const hasLang = /\blang\s*=/.test(attributes);
+          const finalAttributes = hasLang ? attributes : `${attributes} lang="ts"`;
+          return `<script${finalAttributes}>\n${newScript}\n</script>`;
+        }
       );
     } else {
       return vueCode.replace(
-        /<script[^>]*>([\s\S]*?)<\/script>/,
-        `<script lang="ts">\n${newScript}\n</script>`
+        /<script([^>]*)>([\s\S]*?)<\/script>/,
+        (match, attributes) => {
+          // Preserve existing attributes, only add lang="ts" if not present
+          const hasLang = /\blang\s*=/.test(attributes);
+          const finalAttributes = hasLang ? attributes : `${attributes} lang="ts"`;
+          return `<script${finalAttributes}>\n${newScript}\n</script>`;
+        }
       );
     }
   }

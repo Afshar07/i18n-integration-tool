@@ -112,14 +112,18 @@ export class FileProcessor {
 
     // Extract template section
     const templateContent = this.templateTransformer.extractTemplateFromVue(content);
+    console.log('DEBUG: Template content extracted:', !!templateContent, templateContent?.length);
     if (templateContent) {
       const templateMatches = matches.filter(m => m.context === 'template');
+      console.log('DEBUG: Template matches found:', templateMatches.length);
       if (templateMatches.length > 0) {
+        console.log('DEBUG: Processing template matches:', templateMatches.map(m => m.text));
         const templateResult = await this.templateTransformer.transformTemplate(
           templateContent,
           templateMatches,
           keyMap
         );
+        console.log('DEBUG: Template transformation result:', templateResult.hasChanges, templateResult.replacements.length);
         
         if (templateResult.hasChanges) {
           transformedContent = this.templateTransformer.replaceTemplateInVue(
@@ -127,6 +131,7 @@ export class FileProcessor {
             templateResult.transformedTemplate
           );
           allReplacements.push(...templateResult.replacements);
+          console.log('DEBUG: Template content replaced');
         }
       }
     }
