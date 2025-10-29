@@ -2,7 +2,7 @@ import { ValidationResult, I18nIntegrationConfig, TextMatch } from '../types';
 import { logger, FileOperations } from '../utils';
 import { TextPatternMatcher, CONTEXT_PATTERNS } from '../scanner/text-patterns';
 import { NuxtIntegrationValidator, NuxtValidationOptions, NuxtValidationResult } from './nuxt-integration-validator';
-import * as babel from '@babel/parser';
+// Removed babel import - will use dynamic import
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -384,15 +384,19 @@ export class ValidationSystem {
    */
   private async validateJavaScriptSyntax(content: string, filePath: string): Promise<void> {
     try {
+      const { parse } = await import('@babel/parser');
+      
       const isTypeScript = filePath.endsWith('.ts') || filePath.endsWith('.tsx');
       const isJSX = filePath.endsWith('.jsx') || filePath.endsWith('.tsx');
 
-      const plugins: any[] = [];
+      const plugins: any[] = ['decorators-legacy', 'classProperties', 'objectRestSpread'];
       if (isTypeScript) plugins.push('typescript');
       if (isJSX) plugins.push('jsx');
 
-      babel.parse(content, {
+      parse(content, {
         sourceType: 'module',
+        allowImportExportEverywhere: true,
+        allowReturnOutsideFunction: true,
         plugins,
         errorRecovery: false
       });
