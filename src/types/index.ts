@@ -27,6 +27,10 @@ export interface GeneratedKey {
   originalText: string;
   confidence: number;
   suggestions?: string[];
+  filePath?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  context?: string;
 }
 
 export interface TransformationResult {

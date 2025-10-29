@@ -249,7 +249,7 @@ export class KeyManager {
   /**
    * Generate keys for multiple text matches (batch processing)
    */
-  async generateKeys(matches: Array<{ text: string; filePath: string; context?: string }>): Promise<GeneratedKey[]> {
+  async generateKeys(matches: Array<{ text: string; filePath: string; lineNumber?: number; columnNumber?: number; context?: string }>): Promise<GeneratedKey[]> {
     if (!matches) {
       throw new Error('Matches parameter is undefined. Please ensure scan results contain a valid matches array.');
     }
@@ -269,13 +269,23 @@ export class KeyManager {
           key: result.finalKey,
           originalText: match.text,
           confidence: result.generatedKey.confidence,
-          suggestions: result.generatedKey.suggestions
+          suggestions: result.generatedKey.suggestions,
+          filePath: match.filePath,
+          lineNumber: match.lineNumber,
+          columnNumber: match.columnNumber,
+          context: match.context
         });
       } catch (error) {
         logger.warn(`Failed to generate key for text "${match.text}": ${error}`);
         // Generate a fallback key
         const fallbackKey = this.keyGenerator.generateKey(match.text, match.context);
-        results.push(fallbackKey);
+        results.push({
+          ...fallbackKey,
+          filePath: match.filePath,
+          lineNumber: match.lineNumber,
+          columnNumber: match.columnNumber,
+          context: match.context
+        });
       }
     }
     
