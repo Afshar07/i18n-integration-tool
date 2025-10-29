@@ -11,10 +11,10 @@ const TRANSLITERATION_MAP: Record<string, string> = {
   'ش': 'sh', 'ص': 's', 'ض': 'z', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f',
   'ق': 'gh', 'ک': 'k', 'گ': 'g', 'ل': 'l', 'م': 'm', 'ن': 'n', 'و': 'v', 'ه': 'h',
   'ی': 'i', 'ء': '', 'ئ': 'y', 'ؤ': 'v',
-  
+
   // Arabic characters
   'ك': 'k', 'ي': 'y', 'ة': 'h',
-  
+
   // Common Persian words for better semantic meaning
   'سلام': 'hello', 'خوش آمدید': 'welcome', 'ورود': 'login', 'خروج': 'logout',
   'ثبت نام': 'register', 'رمز عبور': 'password', 'نام کاربری': 'username',
@@ -36,24 +36,24 @@ const TRANSLITERATION_MAP: Record<string, string> = {
  */
 export class KeyGenerator {
   private usedKeys = new Set<string>();
-  
-  constructor(private options: KeyGenerationOptions) {}
+
+  constructor(private options: KeyGenerationOptions) { }
 
   /**
    * Generate a meaningful English key from Persian/Arabic text
    */
   generateKey(text: string, context?: string): GeneratedKey {
     logger.info(`Generating key for text: "${text}"`);
-    
+
     const normalizedText = this.normalizeText(text);
     const transliteratedText = this.transliterateText(normalizedText);
     const semanticKey = this.createSemanticKey(transliteratedText, context);
     const finalKey = this.ensureUniqueness(semanticKey);
-    
+
     const confidence = this.calculateConfidence(text, finalKey);
-    
+
     logger.info(`Generated key: "${finalKey}" with confidence: ${confidence}`);
-    
+
     return {
       key: finalKey,
       originalText: text,
@@ -148,7 +148,7 @@ export class KeyGenerator {
     }
 
     const parts = key.split('_');
-    
+
     // If single word, truncate directly
     if (parts.length === 1) {
       return key.substring(0, this.options.maxLength);
@@ -248,7 +248,7 @@ export class KeyGenerator {
         const transliterated = this.transliterateText(word);
         return transliterated.charAt(0);
       }).join('_');
-      
+
       if (abbreviated.length > 1) {
         alternatives.push(abbreviated);
       }

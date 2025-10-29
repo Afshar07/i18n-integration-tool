@@ -128,6 +128,24 @@ export class CodeTransformer {
           const replacementKey = textToKeyMap.get(value);
           
           if (replacementKey) {
+            // Skip string literals that are used as object property keys
+            if (t.isObjectProperty(path.parent) && path.parent.key === path.node) {
+              logger.debug(`Skipping object property key: "${value}"`);
+              return;
+            }
+            
+            // Skip string literals that are used as class property keys
+            if (t.isClassProperty(path.parent) && path.parent.key === path.node) {
+              logger.debug(`Skipping class property key: "${value}"`);
+              return;
+            }
+            
+            // Skip string literals that are used as method names
+            if (t.isObjectMethod(path.parent) && path.parent.key === path.node) {
+              logger.debug(`Skipping method name: "${value}"`);
+              return;
+            }
+
             // Create $t() call expression
             const functionName = this.options.useAlias ? '$t' : 't';
             const callExpression = t.callExpression(

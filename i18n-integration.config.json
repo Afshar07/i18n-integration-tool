@@ -1,12 +1,7 @@
 {
   "sourceDirectories": [
-    "components",
-    "pages",
-    "layouts",
-    "plugins",
-    "middleware",
-    "composables",
-    "store"
+    "src",
+    "examples"
   ],
   "excludePatterns": [
     "node_modules/**",
